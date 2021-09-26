@@ -16,11 +16,10 @@ typedef struct
     unsigned int m_tasks;
 }ProcessManager;
 
-int tasks = 0;
-
-Process* ProcessParams(char* file_name)
+void ProcessParams(ProcessManager* pm, char* file_name)
 {
-    Process* pTasks = 0;
+    pm->p_Process = 0;
+    pm->m_tasks = 0;
 
     FILE* fp = 0;
     fp = fopen(file_name, "r");
@@ -31,49 +30,51 @@ Process* ProcessParams(char* file_name)
         int c = 0;
         while(c != -1)
         {
-            if(tasks == 0)
+            if(pm->m_tasks == 0)
             {
-                pTasks = (Process*)malloc(sizeof(Process));
+                pm->p_Process = (Process*)malloc(sizeof(Process));
             }
             else
             {
-                size_t size = (sizeof(Process) * (size_t)(tasks + 1));
-                pTasks = (Process*)realloc(pTasks, size);
+                size_t size = (sizeof(Process) * (size_t)(pm->m_tasks + 1));
+                pm->p_Process = (Process*)realloc(pm->p_Process, size);
             }
-            memset(pTasks + tasks, 0, sizeof(Process));
+            memset(pm->p_Process + pm->m_tasks, 0, sizeof(Process));
 
-            c = fscanf(fp, "%u %u %u", &pTasks[tasks].m_arrivalTime, &pTasks[tasks].m_burstTime, 
-                                &pTasks[tasks].m_priorityLevel);
-            ++tasks;
+            c = fscanf(fp, "%u %u %u",  &pm->p_Process[pm->m_tasks].m_arrivalTime, 
+                                        &pm->p_Process[pm->m_tasks].m_burstTime, 
+                                        &pm->p_Process[pm->m_tasks].m_priorityLevel);
+            ++pm->m_tasks;
         }
-        printf("Number of processes loaded: %d\n", tasks);
+        printf("Number of processes loaded: %d\n", pm->m_tasks);
     }
     fclose(fp);
-    return pTasks;
 }
 
-void PrintProcessVars(Process* pProcess)
+void PrintProcessVars(ProcessManager* pm)
 {
     printf("\n");
-    for(int i = 0; i < tasks; ++i)
+    for(unsigned int i = 0; i < pm->m_tasks; ++i)
     {
         printf("Process: %d\n", i);
-        printf("Arrival Time: %u\n", pProcess[i].m_arrivalTime);
-        printf("Burst Time: %u\n", pProcess[i].m_burstTime);
-        printf("Priority Level: %u\n\n", pProcess[i].m_priorityLevel);
+        printf("Arrival Time: %u\n", pm->p_Process[i].m_arrivalTime);
+        printf("Burst Time: %u\n", pm->p_Process[i].m_burstTime);
+        printf("Priority Level: %u\n\n", pm->p_Process[i].m_priorityLevel);
     }
 }
 
-void Cleanup(Process* pProcess)
+void Cleanup(ProcessManager* pm)
 {
-    free(pProcess);
+    free(pm->p_Process);
 }
 
 int main(int argc, char* argv[])
 {
     (void)argc;
-    Process* pProcess = ProcessParams(*(argv + 1));
-    PrintProcessVars(pProcess);
-    Cleanup(pProcess);
+    ProcessManager ProcessMgr;
+    ProcessParams(&ProcessMgr, *(argv + 1));
+    PrintProcessVars(&ProcessMgr);
+    Cleanup(&ProcessMgr);
+
     return 0;
 }
